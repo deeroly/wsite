@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111827">
+  <title>Life Calendar</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <div class="eyebrow">PERSONAL TRACKER</div>
+      <h1>Life Calendar</h1>
+    </div>
+    <div class="today-pill" id="todayPill"></div>
+  </header>
+
+  <main class="app-shell">
+    <section class="calendar-column">
+      <div id="calendar"></div>
+      <section id="selectedDayPanel" class="selected-panel hidden"></section>
+      <section id="overduePanel" class="overdue-panel"></section>
+    </section>
+
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-head">
+        <div>
+          <div class="eyebrow">TRACKING</div>
+          <h2>Categories</h2>
+        </div>
+        <button id="closeSidebar" class="icon-btn" aria-label="Oldalsáv bezárása">×</button>
+      </div>
+      <button id="toggleAll" class="wide-btn">Display all</button>
+      <div id="sidebarContent"></div>
+    </aside>
+  </main>
+
+  <button id="openSidebar" class="mobile-sidebar-btn" aria-label="Oldalsáv megnyitása">☰</button>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,210 @@
+{
+  "Általános": {
+    "hajmosás": {
+      "frequency": null,
+      "dates": []
+    },
+    "fogmosás reggel": {
+      "frequency": null,
+      "dates": []
+    },
+    "arctisztítás - három fázisú laroche": {
+      "frequency": null,
+      "dates": []
+    },
+    "mellkas hidratáló krém - laroche": {
+      "frequency": null,
+      "dates": []
+    },
+    "naptej reggel": {
+      "frequency": null,
+      "dates": []
+    },
+    "hidegfröccs": {
+      "frequency": null,
+      "dates": []
+    },
+    "intimtorna turbó": {
+      "frequency": null,
+      "dates": []
+    },
+    "intimtorna teljes": {
+      "frequency": null,
+      "dates": []
+    },
+    "edzés": {
+      "frequency": null,
+      "dates": []
+    },
+    "szauna": {
+      "frequency": null,
+      "dates": []
+    },
+    "viszketés zuhany után": {
+      "frequency": null,
+      "dates": []
+    },
+    "migrén": {
+      "frequency": null,
+      "dates": []
+    },
+    "szeborrea belobbant": {
+      "frequency": null,
+      "dates": []
+    }
+  },
+  "Gyógyszer": {
+    "C-vitamin": {
+      "frequency": null,
+      "dates": []
+    },
+    "D-vitamin": {
+      "frequency": null,
+      "dates": []
+    },
+    "Magnézium": {
+      "frequency": null,
+      "dates": []
+    },
+    "Flector": {
+      "frequency": null,
+      "dates": []
+    },
+    "Biotech rost": {
+      "frequency": null,
+      "dates": []
+    },
+    "halkollagén": {
+      "frequency": null,
+      "dates": []
+    },
+    "bcaa+glutamine": {
+      "frequency": null,
+      "dates": []
+    },
+    "fehérjeturmix": {
+      "frequency": null,
+      "dates": []
+    },
+    "isotonic": {
+      "frequency": null,
+      "dates": []
+    },
+    "konyhasó": {
+      "frequency": null,
+      "dates": []
+    },
+    "B6": {
+      "frequency": null,
+      "dates": []
+    },
+    "Gal+ vizes por": {
+      "frequency": null,
+      "dates": []
+    },
+    "Gal+ bogyók": {
+      "frequency": null,
+      "dates": []
+    },
+    "Appranax dolo": {
+      "frequency": null,
+      "dates": []
+    },
+    "Strephen": {
+      "frequency": null,
+      "dates": []
+    }
+  },
+  "Csere": {
+    "Ágynemű": {
+      "frequency": 14,
+      "dates": [
+        "2026-09-06"
+      ]
+    },
+    "Kilépők": {
+      "frequency": 21,
+      "dates": [
+        "2026-09-06"
+      ]
+    },
+    "Vízszűrő csere": {
+      "frequency": 30,
+      "dates": [
+        "2026-09-06"
+      ]
+    },
+    "bobby szűrő csere": {
+      "frequency": 30,
+      "dates": [
+        "2026-09-06"
+      ]
+    },
+    "Viráglocsolás": {
+      "frequency": 7,
+      "dates": [
+        "2026-09-06"
+      ]
+    },
+    "Kazán nyomás újratöltés": {
+      "frequency": null,
+      "dates": []
+    },
+    "Mosógép szűrő tisztítás": {
+      "frequency": 30,
+      "dates": [
+        "2026-09-06"
+      ]
+    },
+    "Mosógép tisztítás": {
+      "frequency": 30,
+      "dates": [
+        "2026-09-06"
+      ]
+    },
+    "Mosogatógép tisztítás": {
+      "frequency": 14,
+      "dates": [
+        "2026-09-06"
+      ]
+    }
+  },
+  "Tilos": {
+    "Energiaital": {
+      "frequency": null,
+      "dates": []
+    },
+    "Csoki": {
+      "frequency": null,
+      "dates": []
+    },
+    "Gyümölcslé": {
+      "frequency": null,
+      "dates": []
+    },
+    "Üdítő": {
+      "frequency": null,
+      "dates": []
+    },
+    "Gumicukor": {
+      "frequency": null,
+      "dates": []
+    },
+    "Kávé": {
+      "frequency": null,
+      "dates": []
+    },
+    "Alkohol": {
+      "frequency": null,
+      "dates": []
+    },
+    "Nem léptem ki a lakásból": {
+      "frequency": null,
+      "dates": []
+    },
+    "Cigi": {
+      "frequency": null,
+      "dates": []
+    }
+  }
+}
