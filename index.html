@@ -3,41 +3,61 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#111827">
+  <meta name="theme-color" content="#f5f6f8">
   <title>Life Calendar</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="topbar">
-    <div>
-      <div class="eyebrow">PERSONAL TRACKER</div>
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <div class="eyebrow">PRIVATE SPACE</div>
       <h1>Life Calendar</h1>
+      <p class="login-subtitle">Enter your password to continue.</p>
+      <form id="loginForm" class="login-form" autocomplete="off">
+        <input id="passwordInput" type="password" autocomplete="current-password" placeholder="Password" autofocus>
+        <button type="submit" id="loginBtn">Send</button>
+      </form>
+      <div id="loginMessage" class="login-message" aria-live="polite"></div>
     </div>
-    <div class="today-pill" id="todayPill"></div>
-  </header>
+  </div>
 
-  <main class="app-shell">
-    <section class="calendar-column">
-      <div id="calendar"></div>
-      <section id="selectedDayPanel" class="selected-panel hidden"></section>
-      <section id="overduePanel" class="overdue-panel"></section>
-    </section>
-
-    <aside id="sidebar" class="sidebar">
-      <div class="sidebar-head">
-        <div>
-          <div class="eyebrow">TRACKING</div>
-          <h2>Categories</h2>
-        </div>
-        <button id="closeSidebar" class="icon-btn" aria-label="Oldalsáv bezárása">×</button>
+  <div id="appScreen" class="app-hidden">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">PERSONAL TRACKER</div>
+        <h1>Life Calendar</h1>
       </div>
-      <button id="toggleAll" class="wide-btn">Display all</button>
-      <div id="sidebarContent"></div>
-    </aside>
-  </main>
+      <div class="header-actions">
+        <div class="today-pill" id="todayPill"></div>
+        <button id="savePageBtn" class="save-page-btn">Save page</button>
+        <button id="logoutBtn" class="logout-btn">Log out</button>
+      </div>
+    </header>
 
-  <button id="openSidebar" class="mobile-sidebar-btn" aria-label="Oldalsáv megnyitása">☰</button>
+    <main class="app-shell">
+      <section class="calendar-column">
+        <div id="calendar"></div>
+        <section id="selectedDayPanel" class="selected-panel hidden"></section>
+        <section id="overduePanel" class="overdue-panel"></section>
+      </section>
 
+      <aside id="sidebar" class="sidebar">
+        <div class="sidebar-head">
+          <div>
+            <div class="eyebrow">TRACKING</div>
+            <h2>Categories</h2>
+          </div>
+          <button id="closeSidebar" class="icon-btn" aria-label="Oldalsáv bezárása">×</button>
+        </div>
+        <button id="toggleAll" class="wide-btn">Hide all</button>
+        <div id="sidebarContent"></div>
+      </aside>
+    </main>
+
+    <button id="openSidebar" class="mobile-sidebar-btn" aria-label="Oldalsáv megnyitása">☰</button>
+  </div>
+
+  <script src="config.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
