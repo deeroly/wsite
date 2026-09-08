@@ -15,12 +15,44 @@ function latestDate(item){return item.dates?.length?[...item.dates].sort().at(-1
 function allItems(){return Object.entries(db).flatMap(([category,items])=>Object.entries(items).map(([name,item])=>({category,name,item})))}
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
 
+const SESSION_KEY = "life_calendar_session";
+
 async function api(path, options={}) {
-  const res=await fetch(API()+path,{credentials:"include",...options,headers:{"Content-Type":"application/json",...(options.headers||{})}});
-  if(res.status===401){showLogin();throw new Error("unauthorized")}
-  const text=await res.text();
-  let data={}; try{data=text?JSON.parse(text):{}}catch{data={message:text}}
-  if(!res.ok) throw new Error(data.message||"Request failed");
+  const token = localStorage.getItem(SESSION_KEY);
+
+  const headers = {
+    "Content-Type": "application/json",
+    ...(options.headers || {})
+  };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const res = await fetch(API() + path, {
+    ...options,
+    headers
+  });
+
+  if (res.status === 401) {
+    localStorage.removeItem(SESSION_KEY);
+    showLogin();
+    throw new Error("unauthorized");
+  }
+
+  const text = await res.text();
+
+  let data = {};
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    data = {message: text};
+  }
+
+  if (!res.ok) {
+    throw new Error(data.message || "Request failed");
+  }
+
   return data;
 }
 
@@ -34,15 +66,31 @@ function showApp(){
   document.getElementById("appScreen").classList.remove("app-hidden");
 }
 
-async function login(password){
-  const btn=document.getElementById("loginBtn"), msg=document.getElementById("loginMessage");
-  btn.disabled=true; msg.textContent="";
-  try{
-    await api("/login",{method:"POST",body:JSON.stringify({password})});
-    document.getElementById("passwordInput").value="";
-    showApp(); await loadData();
-  }catch(e){msg.textContent=e.message||"Login failed."}
-  finally{btn.disabled=false}
+async function login(password) {
+  const btn = document.getElementById("loginBtn");
+  const msg = document.getElementById("loginMessage");
+
+  btn.disabled = true;
+  msg.textContent = "";
+
+  try {
+    const result = await api("/login", {
+      method: "POST",
+      body: JSON.stringify({password})
+    });
+
+    localStorage.setItem(SESSION_KEY, result.token);
+
+    document.getElementById("passwordInput").value = "";
+
+    showApp();
+    await loadData();
+
+  } catch (e) {
+    msg.textContent = e.message || "Login failed.";
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 async function loadData(){
@@ -116,7 +164,15 @@ function renderOverdue(){
 
 document.getElementById("loginForm").addEventListener("submit",e=>{e.preventDefault();login(document.getElementById("passwordInput").value)});
 document.getElementById("savePageBtn").onclick=savePage;
-document.getElementById("logoutBtn").onclick=async()=>{try{await api("/logout",{method:"POST"})}catch{}showLogin()};
+document.getElementById("logoutBtn").onclick = async () => {
+  localStorage.removeItem(SESSION_KEY);
+
+  try {
+    await api("/logout", {method: "POST"});
+  } catch {}
+
+  showLogin();
+};
 document.getElementById("toggleAll").onclick=()=>{const keys=Object.keys(visibility),showAll=keys.some(k=>!visibility[k]);keys.forEach(k=>visibility[k]=showAll);document.getElementById("toggleAll").textContent=showAll?"Hide all":"Display all";renderSidebar();renderCalendar()};
 document.getElementById("openSidebar").onclick=()=>document.getElementById("sidebar").classList.add("open");
 document.getElementById("closeSidebar").onclick=()=>document.getElementById("sidebar").classList.remove("open");
