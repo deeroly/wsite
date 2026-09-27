@@ -23,14 +23,22 @@
 
   <div id="appScreen" class="app-hidden">
     <header class="topbar">
-      <div>
-        <div class="eyebrow">PERSONAL TRACKER</div>
-        <h1>Life Calendar</h1>
+      <div class="topbar-top">
+        <div>
+          <div class="eyebrow">PERSONAL TRACKER</div>
+          <h1>Life Calendar</h1>
+        </div>
+        <div class="header-actions">
+          <div class="today-pill" id="todayPill"></div>
+          <span id="saveStatus" class="save-status"></span>
+          <button id="savePageBtn" class="save-page-btn">Save page</button>
+          <button id="logoutBtn" class="logout-btn">Log out</button>
+        </div>
       </div>
-      <div class="header-actions">
-        <div class="today-pill" id="todayPill"></div>
-        <button id="savePageBtn" class="save-page-btn">Save page</button>
-        <button id="logoutBtn" class="logout-btn">Log out</button>
+      <div class="profile-picker" id="profilePicker">
+        <button class="profile-circle" data-profile="G">G</button>
+        <button class="profile-circle" data-profile="D">D</button>
+        <button class="profile-circle" data-profile="K">K</button>
       </div>
     </header>
 
@@ -40,21 +48,7 @@
         <div id="calendar"></div>
         <section id="selectedDayPanel" class="selected-panel hidden"></section>
       </section>
-
-      <aside id="sidebar" class="sidebar">
-        <div class="sidebar-head">
-          <div>
-            <div class="eyebrow">TRACKING</div>
-            <h2>Categories</h2>
-          </div>
-          <button id="closeSidebar" class="icon-btn" aria-label="Oldalsáv bezárása">×</button>
-        </div>
-        <button id="toggleAll" class="wide-btn">Hide all</button>
-        <div id="sidebarContent"></div>
-      </aside>
     </main>
-
-    <button id="openSidebar" class="mobile-sidebar-btn" aria-label="Oldalsáv megnyitása">☰</button>
   </div>
 
   <script src="config.js"></script>

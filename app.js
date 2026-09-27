@@ -1,18 +1,41 @@
 let db = {};
 let selectedDate = null;
-let visibility = {};
-let pendingChecks = {};
+let selectedProfile = "K";
+let autoSaveTimer = null;
+let autoSaveInFlight = null;
 
 const monthNames=["január","február","március","április","május","június","július","augusztus","szeptember","október","november","december"];
 const weekdayNames=["H","K","Sze","Cs","P","Szo","V"];
-const catClass={"Általános":"cat-altalanos","Gyógyszer":"cat-gyogyszer","Csere":"cat-csere","Tilos":"cat-tilos"};
+const catClass={"Közös":"cat-kozos","Fürdő":"cat-furdo","Konyha":"cat-konyha","D":"cat-d","G":"cat-g","Gyógyszer":"cat-gyogyszer","Tilos":"cat-tilos"};
+
+// Which real data.json categories belong to which profile tab.
+const PROFILES={
+ G:["G","Gyógyszer","Tilos"],
+ D:["D"],
+ K:["Közös","Fürdő","Konyha"]
+};
 
 const API = () => window.LIFE_CALENDAR_API.replace(/\/$/,"");
 
 function isoToday(){return new Date().toLocaleDateString("sv-SE")}
 function parseISO(s){const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)}
 function latestDate(item){return item.dates?.length?[...item.dates].sort().at(-1):null}
-function allItems(){return Object.entries(db).flatMap(([category,items])=>Object.entries(items).map(([name,item])=>({category,name,item})))}
+
+// "_archived" is never iterated here, so archived items are automatically
+// invisible to the calendar, checklist and overdue panel everywhere in the app.
+function allItems(){
+ return Object.entries(db)
+  .filter(([category])=>category!=="_archived")
+  .flatMap(([category,items])=>Object.entries(items).map(([name,item])=>({category,name,item})));
+}
+function profileItems(profile){
+ const cats=PROFILES[profile]||[];
+ return allItems().filter(({category})=>cats.includes(category));
+}
+function profileCategories(profile){
+ return (PROFILES[profile]||[]).filter(c=>db[c]).map(c=>[c,db[c]]);
+}
+
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
 
 const SESSION_KEY = "life_calendar_session";
@@ -96,25 +119,20 @@ async function login(password) {
 async function loadData(){
   const result=await api("/data");
   db=result.data;
-  visibility={};
-  allItems().forEach(({category,name})=>visibility[`${category}::${name}`]=true);
+  if(!db._archived)db._archived={};
   selectedDate=isoToday();
   document.getElementById("todayPill").textContent=`Ma · ${selectedDate}`;
-  renderSidebar();renderCalendar();renderSelectedDay();renderOverdue();
+  renderProfilePicker();renderCalendar();renderSelectedDay();renderOverdue();
 }
 
-function renderSidebar(){
- const box=document.getElementById("sidebarContent");
- box.innerHTML=Object.entries(db).map(([category,items])=>`
- <section class="category"><div class="category-title">${esc(category)}</div>
- ${Object.entries(items).map(([name,item])=>{
-  const key=`${category}::${name}`, latest=latestDate(item);
-  return `<div class="task-row">
-   <label class="switch"><input type="checkbox" ${visibility[key]?"checked":""} data-key="${esc(key)}"><span class="slider"></span></label>
-   <label class="task-label" data-toggle-key="${esc(key)}">${esc(name)}<span class="latest">${latest||"—"}</span></label>
-  </div>`;
- }).join("")}</section>`).join("");
- box.querySelectorAll("input[data-key]").forEach(i=>i.addEventListener("change",e=>{visibility[e.target.dataset.key]=e.target.checked;renderCalendar()}));
+function renderProfilePicker(){
+ document.querySelectorAll(".profile-circle").forEach(btn=>{
+  btn.classList.toggle("active",btn.dataset.profile===selectedProfile);
+ });
+}
+function selectProfile(profile){
+ selectedProfile=profile;
+ renderProfilePicker();renderCalendar();renderSelectedDay();
 }
 
 function getMonthRange(){
@@ -123,7 +141,7 @@ function getMonthRange(){
  let cur=new Date(min.getFullYear(),min.getMonth(),1), end=new Date(now.getFullYear(),now.getMonth(),1), out=[];
  while(cur<=end){out.push(new Date(cur));cur=new Date(cur.getFullYear(),cur.getMonth()+1,1)} return out;
 }
-function itemsForDate(iso){return allItems().filter(({category,name,item})=>visibility[`${category}::${name}`]&&(item.dates||[]).includes(iso))}
+function itemsForDate(iso){return profileItems(selectedProfile).filter(({item})=>(item.dates||[]).includes(iso))}
 
 function renderCalendar(){
  const root=document.getElementById("calendar");root.innerHTML=getMonthRange().map(renderMonth).join("");
@@ -140,23 +158,70 @@ function renderMonth(first){
  }
  return `<section class="month"><div class="month-title"><h2>${monthNames[m]} ${y}</h2><span>${days} nap</span></div><div class="weekdays">${weekdayNames.map(x=>`<div class="weekday">${x}</div>`).join("")}</div><div class="days-grid">${cells.join("")}</div></section>`;
 }
+
 function renderSelectedDay(){
- const panel=document.getElementById("selectedDayPanel");panel.classList.remove("hidden");pendingChecks={};
- panel.innerHTML=`<div class="panel-head"><div><div class="eyebrow">SELECTED DAY</div><h2>${selectedDate}</h2></div><div class="actions"><button class="action-btn danger" id="cancelBtn">Cancel</button><button class="action-btn primary" id="saveBtn">Save</button></div></div>
- ${Object.entries(db).map(([category,items])=>`<section class="detail-category"><h3>${esc(category)}</h3>${Object.entries(items).map(([name,item])=>{const done=(item.dates||[]).includes(selectedDate);pendingChecks[`${category}::${name}`]=done;return `<label class="detail-row"><input type="checkbox" data-detail-key="${esc(category+"::"+name)}" ${done?"checked":""}><span>${esc(name)}</span></label>`}).join("")}</section>`).join("")}`;
- panel.querySelectorAll("input[data-detail-key]").forEach(cb=>cb.addEventListener("change",e=>pendingChecks[e.target.dataset.detailKey]=e.target.checked));
- document.getElementById("cancelBtn").onclick=renderSelectedDay;document.getElementById("saveBtn").onclick=saveSelectedDay;
+ const panel=document.getElementById("selectedDayPanel");panel.classList.remove("hidden");
+ panel.innerHTML=`<div class="panel-head"><div><div class="eyebrow">SELECTED DAY · ${esc(selectedProfile)}</div><h2>${selectedDate}</h2></div></div>
+ ${profileCategories(selectedProfile).map(([category,items])=>`<section class="detail-category"><h3>${esc(category)}</h3>${Object.entries(items).map(([name,item])=>{const done=(item.dates||[]).includes(selectedDate);const latest=latestDate(item);return `<label class="detail-row"><input type="checkbox" data-detail-category="${esc(category)}" data-detail-name="${esc(name)}" ${done?"checked":""}><span>${esc(name)}</span>${latest?`<span class="latest">${latest}</span>`:""}</label>`}).join("")}</section>`).join("")}`;
+ panel.querySelectorAll("input[data-detail-name]").forEach(cb=>cb.addEventListener("change",e=>{
+  toggleDate(e.target.dataset.detailCategory,e.target.dataset.detailName,e.target.checked);
+ }));
 }
-async function saveSelectedDay(){
- Object.entries(pendingChecks).forEach(([key,done])=>{const [category,...rest]=key.split("::"),name=rest.join("::"),item=db[category][name],dates=new Set(item.dates||[]);done?dates.add(selectedDate):dates.delete(selectedDate);item.dates=[...dates].sort()});
- renderSidebar();renderCalendar();renderSelectedDay();renderOverdue();
+
+// Ticking a box updates local state + UI immediately (calendar/checklist/overdue),
+// then queues an autosave — this replaces the old "check boxes, then hit Save" flow.
+function toggleDate(category,name,checked){
+ const item=db[category][name],dates=new Set(item.dates||[]);
+ checked?dates.add(selectedDate):dates.delete(selectedDate);
+ item.dates=[...dates].sort();
+ renderCalendar();renderSelectedDay();renderOverdue();
+ queueAutoSave();
 }
+
+function setSaveStatus(text,cls=""){
+ const el=document.getElementById("saveStatus");
+ if(!el)return;
+ el.textContent=text;
+ el.className="save-status"+(cls?` ${cls}`:"");
+}
+
+// Debounced so rapid ticking doesn't fire one PUT per checkbox.
+function queueAutoSave(){
+ setSaveStatus("Mentés…");
+ clearTimeout(autoSaveTimer);
+ autoSaveTimer=setTimeout(()=>{performSave().catch(()=>{});},600);
+}
+
+// Does the actual PUT (this is what triggers the backend's git push). Chained so
+// overlapping calls (autosave + the manual button) never race each other.
+async function performSave(){
+ if(autoSaveInFlight)await autoSaveInFlight.catch(()=>{});
+ setSaveStatus("Mentés…");
+ const task=api("/data",{method:"PUT",body:JSON.stringify({data:db})});
+ autoSaveInFlight=task;
+ try{
+  await task;
+  setSaveStatus("Minden változás mentve","saved");
+ }catch(e){
+  setSaveStatus("Mentés sikertelen — próbáld a Save page gombot","error");
+  throw e;
+ }finally{
+  if(autoSaveInFlight===task)autoSaveInFlight=null;
+ }
+}
+
+// The explicit "Save page" button: unchanged behavior — forces an immediate save
+// (skips the debounce wait) via the same PUT /data call, and alerts on the result.
 async function savePage(){
  const btn=document.getElementById("savePageBtn");btn.disabled=true;btn.textContent="Saving…";
- try{await api("/data",{method:"PUT",body:JSON.stringify({data:db})});alert("Saved.");}
- catch(e){alert(e.message||"Save failed.")}finally{btn.disabled=false;btn.textContent="Save page"}
+ clearTimeout(autoSaveTimer);
+ try{await performSave();alert("Saved.");}
+ catch(e){alert(e.message||"Save failed.")}
+ finally{btn.disabled=false;btn.textContent="Save page"}
 }
+
 function renderOverdue(){
+ // Always computed across every non-archived item, regardless of the selected profile.
  const panel=document.getElementById("overduePanel"),today=parseISO(isoToday());
  const overdue=allItems().map(({category,name,item})=>{const last=latestDate(item);if(!last||!Number.isFinite(item.frequency))return null;const due=parseISO(last);due.setDate(due.getDate()+Number(item.frequency));const days=Math.floor((today-due)/86400000);return days>0?{name,days}:null}).filter(Boolean).sort((a,b)=>b.days-a.days);
  panel.innerHTML=`<h2 class="overdue-title">Overdue:</h2>${overdue.length?overdue.map(x=>`<div class="overdue-item"><span>${esc(x.name)}</span><span class="overdue-days">${x.days} day${x.days===1?"":"s"}</span></div>`).join(""):`<p class="empty-note">Nincs lejárt, gyakorisággal rendelkező feladat.</p>`}`;
@@ -173,8 +238,6 @@ document.getElementById("logoutBtn").onclick = async () => {
 
   showLogin();
 };
-document.getElementById("toggleAll").onclick=()=>{const keys=Object.keys(visibility),showAll=keys.some(k=>!visibility[k]);keys.forEach(k=>visibility[k]=showAll);document.getElementById("toggleAll").textContent=showAll?"Hide all":"Display all";renderSidebar();renderCalendar()};
-document.getElementById("openSidebar").onclick=()=>document.getElementById("sidebar").classList.add("open");
-document.getElementById("closeSidebar").onclick=()=>document.getElementById("sidebar").classList.remove("open");
+document.querySelectorAll(".profile-circle").forEach(btn=>btn.addEventListener("click",()=>selectProfile(btn.dataset.profile)));
 
 (async()=>{try{await api("/session");showApp();await loadData()}catch{showLogin()}})();
