@@ -189,7 +189,7 @@ function setSaveStatus(text,cls=""){
 function queueAutoSave(){
  setSaveStatus("Mentés…");
  clearTimeout(autoSaveTimer);
- autoSaveTimer=setTimeout(()=>{performSave().catch(()=>{});},600);
+ autoSaveTimer=setTimeout(()=>{performSave().catch(()=>{});},2500);
 }
 
 // Does the actual PUT (this is what triggers the backend's git push). Chained so
