@@ -12,7 +12,8 @@ const catClass={"Közös":"cat-kozos","Fürdő":"cat-furdo","Konyha":"cat-konyha
 const PROFILES={
  G:["G","Gyógyszer","Tilos"],
  D:["D"],
- K:["Közös","Fürdő","Konyha"]
+ K:["Közös","Fürdő","Konyha"],
+ W:["Edzés", "Cardio", "Mobility", "Strength"]
 };
 
 const API = () => window.LIFE_CALENDAR_API.replace(/\/$/,"");
