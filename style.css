@@ -54,11 +54,17 @@ h1,h2,h3,p{margin:0} h1{font-size:27px;letter-spacing:-.04em}
 .task-chip.cat-d{background:#f5ecff;color:#6b3fa0}
 .task-chip.cat-g{background:#ffe9f3;color:#a13d70}
 .task-chip.cat-gyogyszer{background:#fff6e9;color:#8a5b15}
+.task-chip.cat-edzes{background:#e9f8ee;color:#2b7a48}
 .selected-panel,.overdue-panel{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;margin-bottom:24px}
 .hidden{display:none}.panel-head{margin-bottom:16px}.panel-head h2{font-size:19px;letter-spacing:-.03em}
 .detail-category{border-top:1px solid var(--line);padding:13px 0}.detail-category h3{font-size:11px;text-transform:uppercase;color:var(--muted);letter-spacing:.08em;margin-bottom:8px}
 .detail-row{display:flex;align-items:center;gap:9px;padding:7px 0;font-size:13px}.detail-row input{width:18px;height:18px;accent-color:var(--accent)}
 .detail-row .latest{margin-left:auto;color:var(--muted);font-size:12px}
+.detail-group{margin-top:6px}
+.detail-group .detail-group{margin-left:10px;padding-left:10px;border-left:2px solid var(--line)}
+.detail-subgroup{margin:10px 0 2px;font-weight:800}
+h4.detail-subgroup{font-size:13px;color:var(--ink)}
+h5.detail-subgroup{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
 .overdue-title{font-size:19px;margin-bottom:12px}.overdue-item{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line);font-size:13px}.overdue-days{font-weight:850;color:var(--danger);white-space:nowrap}
 .empty-note{color:var(--muted);font-size:13px;padding:8px 0}
 

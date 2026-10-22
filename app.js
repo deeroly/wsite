@@ -6,14 +6,14 @@ let autoSaveInFlight = null;
 
 const monthNames=["január","február","március","április","május","június","július","augusztus","szeptember","október","november","december"];
 const weekdayNames=["H","K","Sze","Cs","P","Szo","V"];
-const catClass={"Közös":"cat-kozos","Fürdő":"cat-furdo","Konyha":"cat-konyha","D":"cat-d","G":"cat-g","Gyógyszer":"cat-gyogyszer","Tilos":"cat-tilos"};
+const catClass={"Közös":"cat-kozos","Fürdő":"cat-furdo","Konyha":"cat-konyha","D":"cat-d","G":"cat-g","Gyógyszer":"cat-gyogyszer","Tilos":"cat-tilos","Edzés":"cat-edzes"};
 
-// Which real data.json categories belong to which profile tab.
+// Which real data.json top-level categories belong to which profile tab.
 const PROFILES={
  G:["G","Gyógyszer","Tilos"],
  D:["D"],
  K:["Közös","Fürdő","Konyha"],
- W:["Edzés", "Cardio", "Mobility", "Strength"]
+ W:["Edzés"]
 };
 
 const API = () => window.LIFE_CALENDAR_API.replace(/\/$/,"");
@@ -22,12 +22,24 @@ function isoToday(){return new Date().toLocaleDateString("sv-SE")}
 function parseISO(s){const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)}
 function latestDate(item){return item.dates?.length?[...item.dates].sort().at(-1):null}
 
+// A node is an "item" (leaf) if it has a dates array; any other object is a group
+// that may contain further groups/items (e.g. Edzés → Strength → Chest → exercise).
+function isLeaf(x){return x&&typeof x==="object"&&Array.isArray(x.dates)}
+function collectItems(node,path,out){
+ Object.entries(node).forEach(([k,v])=>{
+  if(isLeaf(v))out.push({category:path[0],name:k,item:v,path:[...path,k]});
+  else if(v&&typeof v==="object")collectItems(v,[...path,k],out);
+ });
+ return out;
+}
+function getItemByPath(path){return path.reduce((o,k)=>o[k],db)}
+
 // "_archived" is never iterated here, so archived items are automatically
 // invisible to the calendar, checklist and overdue panel everywhere in the app.
 function allItems(){
  return Object.entries(db)
   .filter(([category])=>category!=="_archived")
-  .flatMap(([category,items])=>Object.entries(items).map(([name,item])=>({category,name,item})));
+  .flatMap(([category,items])=>collectItems(items,[category],[]));
 }
 function profileItems(profile){
  const cats=PROFILES[profile]||[];
@@ -154,25 +166,43 @@ function renderMonth(first){
  for(let d=1;d<=days;d++){
   const iso=`${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
   const cls=`day ${iso===selectedDate?"selected":""} ${iso===isoToday()?"today":""}`;
-  const tasks=itemsForDate(iso).map(({category,name})=>`<span class="task-chip ${catClass[category]||""}" title="${esc(name)}">${esc(name)}</span>`).join("");
+  const tasks=itemsForDate(iso).map(({category,name,path})=>`<span class="task-chip ${catClass[category]||""}" title="${esc(path.join(" › "))}">${esc(name)}</span>`).join("");
   cells.push(`<button class="${cls}" data-date="${iso}"><span class="day-num">${d}</span><span class="task-stack">${tasks}</span></button>`);
  }
  return `<section class="month"><div class="month-title"><h2>${monthNames[m]} ${y}</h2><span>${days} nap</span></div><div class="weekdays">${weekdayNames.map(x=>`<div class="weekday">${x}</div>`).join("")}</div><div class="days-grid">${cells.join("")}</div></section>`;
 }
 
+// Recursively renders a category's contents. Leaves become checkbox rows,
+// groups become a titled block (h4 for the 1st nesting level, h5 deeper).
+// The full path is stored as JSON in data-path, since names alone may not be unique.
+function renderNode(node,path){
+ return Object.entries(node).map(([k,v])=>{
+  const p=[...path,k];
+  if(isLeaf(v)){
+   const done=v.dates.includes(selectedDate),latest=latestDate(v);
+   return `<label class="detail-row"><input type="checkbox" data-path="${esc(JSON.stringify(p))}" ${done?"checked":""}><span>${esc(k)}</span>${latest?`<span class="latest">${latest}</span>`:""}</label>`;
+  }
+  if(!v||typeof v!=="object"||!Object.keys(v).length)return "";
+  const inner=renderNode(v,p);
+  if(!inner)return "";
+  const tag=p.length===2?"h4":"h5";
+  return `<div class="detail-group"><${tag} class="detail-subgroup">${esc(k)}</${tag}>${inner}</div>`;
+ }).join("");
+}
+
 function renderSelectedDay(){
  const panel=document.getElementById("selectedDayPanel");panel.classList.remove("hidden");
  panel.innerHTML=`<div class="panel-head"><div><div class="eyebrow">SELECTED DAY · ${esc(selectedProfile)}</div><h2>${selectedDate}</h2></div></div>
- ${profileCategories(selectedProfile).map(([category,items])=>`<section class="detail-category"><h3>${esc(category)}</h3>${Object.entries(items).map(([name,item])=>{const done=(item.dates||[]).includes(selectedDate);const latest=latestDate(item);return `<label class="detail-row"><input type="checkbox" data-detail-category="${esc(category)}" data-detail-name="${esc(name)}" ${done?"checked":""}><span>${esc(name)}</span>${latest?`<span class="latest">${latest}</span>`:""}</label>`}).join("")}</section>`).join("")}`;
- panel.querySelectorAll("input[data-detail-name]").forEach(cb=>cb.addEventListener("change",e=>{
-  toggleDate(e.target.dataset.detailCategory,e.target.dataset.detailName,e.target.checked);
+ ${profileCategories(selectedProfile).map(([category,items])=>`<section class="detail-category"><h3>${esc(category)}</h3>${renderNode(items,[category])}</section>`).join("")}`;
+ panel.querySelectorAll("input[data-path]").forEach(cb=>cb.addEventListener("change",e=>{
+  toggleDate(JSON.parse(e.target.dataset.path),e.target.checked);
  }));
 }
 
 // Ticking a box updates local state + UI immediately (calendar/checklist/overdue),
 // then queues an autosave — this replaces the old "check boxes, then hit Save" flow.
-function toggleDate(category,name,checked){
- const item=db[category][name],dates=new Set(item.dates||[]);
+function toggleDate(path,checked){
+ const item=getItemByPath(path),dates=new Set(item.dates||[]);
  checked?dates.add(selectedDate):dates.delete(selectedDate);
  item.dates=[...dates].sort();
  renderCalendar();renderSelectedDay();renderOverdue();
@@ -211,8 +241,8 @@ async function performSave(){
  }
 }
 
-// The explicit "Save page" button: unchanged behavior — forces an immediate save
-// (skips the debounce wait) via the same PUT /data call, and alerts on the result.
+// The explicit "Save page" button: forces an immediate save (skips the debounce
+// wait) via the same PUT /data call, and alerts on the result.
 async function savePage(){
  const btn=document.getElementById("savePageBtn");btn.disabled=true;btn.textContent="Saving…";
  clearTimeout(autoSaveTimer);
@@ -224,7 +254,7 @@ async function savePage(){
 function renderOverdue(){
  // Always computed across every non-archived item, regardless of the selected profile.
  const panel=document.getElementById("overduePanel"),today=parseISO(isoToday());
- const overdue=allItems().map(({category,name,item})=>{const last=latestDate(item);if(!last||!Number.isFinite(item.frequency))return null;const due=parseISO(last);due.setDate(due.getDate()+Number(item.frequency));const days=Math.floor((today-due)/86400000);return days>0?{name,days}:null}).filter(Boolean).sort((a,b)=>b.days-a.days);
+ const overdue=allItems().map(({name,item})=>{const last=latestDate(item);if(!last||!Number.isFinite(item.frequency))return null;const due=parseISO(last);due.setDate(due.getDate()+Number(item.frequency));const days=Math.floor((today-due)/86400000);return days>0?{name,days}:null}).filter(Boolean).sort((a,b)=>b.days-a.days);
  panel.innerHTML=`<h2 class="overdue-title">Overdue:</h2>${overdue.length?overdue.map(x=>`<div class="overdue-item"><span>${esc(x.name)}</span><span class="overdue-days">${x.days} day${x.days===1?"":"s"}</span></div>`).join(""):`<p class="empty-note">Nincs lejárt, gyakorisággal rendelkező feladat.</p>`}`;
 }
 
