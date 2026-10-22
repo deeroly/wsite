@@ -152,7 +152,8 @@ function getMonthRange(){
  const dates=allItems().flatMap(x=>x.item.dates||[]).sort();
  const min=dates.length?parseISO(dates[0]):new Date(), now=new Date();
  let cur=new Date(min.getFullYear(),min.getMonth(),1), end=new Date(now.getFullYear(),now.getMonth(),1), out=[];
- while(cur<=end){out.push(new Date(cur));cur=new Date(cur.getFullYear(),cur.getMonth()+1,1)} return out;
+ while(cur<=end){out.push(new Date(cur));cur=new Date(cur.getFullYear(),cur.getMonth()+1,1)}
+ return out.reverse(); // newest month first
 }
 function itemsForDate(iso){return profileItems(selectedProfile).filter(({item})=>(item.dates||[]).includes(iso))}
 
